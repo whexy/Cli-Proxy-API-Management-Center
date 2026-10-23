@@ -1,0 +1,89 @@
+# Publishes the panel from the `self-hosted` branch as this repository's latest
+# GitHub release, with the single-file build as its `management.html` asset.
+# CPA installs that asset when its panel repository points here. Runs on every
+# push to the branch, including the upstream-release rebases
+# self-hosted-sync.yaml pushes, and on a manual run from the UI. A failed check
+# publishes nothing, so CPA keeps the last release, and a push's failure is
+# reported to T3 Code, which starts an agent run to repair the branch.
+#
+# A pull request into `self-hosted` runs the same checks without publishing.
+#
+# Releases are tagged `<upstream release>-whexy.<pipeline>`; the panel shows
+# that tag as its version. Upstream's GitHub Actions release workflow also
+# matches these tags, so Actions stay disabled on this repository.
+#
+# Publishes as the `whexy-bot` GitHub App through the secrets `github_app_id`,
+# `github_app_installation_id`, and `github_app_private_key`. Reports through
+# the secret `t3_repair_webhook`, a T3 Code scheduled task's webhook URL.
+variables:
+  # The clone's pod binds the local-path workspace to its node, and every later
+  # step follows it there, so it asks for what the check needs.
+  - &node_resources
+    kubernetes:
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      resources:
+        requests:
+          cpu: "2"
+          memory: 2Gi
+        limits:
+          cpu: "4"
+          memory: 4Gi
+  # A pull request's branch is the one it merges into, so only the event keeps
+  # its runs from publishing.
+  - &publish
+    event: [push, manual]
+    branch: self-hosted
+
+when:
+  event: [push, manual, pull_request]
+  branch: self-hosted
+
+# Naming the release needs the history back to the upstream release.
+clone:
+  - name: git
+    image: woodpeckerci/plugin-git
+    backend_options: *node_resources
+    settings:
+      partial: false
+      depth: 0
+
+steps:
+  - name: check
+    image: node:24
+    backend_options: *node_resources
+    commands:
+      # The version upstream's CI pins in package.json's packageManager.
+      - npm install --global bun@1.3.14
+      - bun install --frozen-lockfile
+      - git fetch --no-tags https://github.com/router-for-me/Cli-Proxy-API-Management-Center.git "+refs/tags/v*:refs/tags/v*"
+      - release_tag="$(git describe --tags --abbrev=0 --match 'v[0-9]*' --exclude '*-*' HEAD)"
+      - mkdir -p .sync && printf '%s' "$release_tag-whexy.$CI_PIPELINE_NUMBER" > .sync/version
+      - printf 'Upstream %s with:\n\n' "$release_tag" > .sync/release-notes.md
+      - git log --reverse --pretty='- %h %s' "$release_tag..HEAD" >> .sync/release-notes.md
+      - VERSION="$(cat .sync/version)" bun run verify
+      - cp dist/index.html .sync/management.html
+
+  - name: publish
+    image: node:24
+    when: *publish
+    environment:
+      GITHUB_APP_ID:
+        from_secret: github_app_id
+      GITHUB_APP_INSTALLATION_ID:
+        from_secret: github_app_installation_id
+      GITHUB_APP_PRIVATE_KEY:
+        from_secret: github_app_private_key
+    commands:
+      - node scripts/self-hosted/publish-release.mjs
+
+  - name: report-failure
+    image: node:24
+    when:
+      - <<: *publish
+        status: failure
+    environment:
+      T3_REPAIR_WEBHOOK:
+        from_secret: t3_repair_webhook
+    commands:
+      - node scripts/self-hosted/report-failure.mjs build
