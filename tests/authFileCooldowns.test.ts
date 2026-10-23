@@ -31,6 +31,15 @@ const render = (
   value?: AuthFileCooldownSnapshot,
   options: { resetting?: boolean; resetDisabled?: boolean; onReset?: () => void } = {}
 ) => renderToStaticMarkup(createElement(AuthFileCooldownSection, { snapshot: value, ...options }));
+const htmlEntities: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#x27;',
+};
+// Matches React's attribute escaping; the English reset hint contains an apostrophe.
+const escapeAttribute = (value: string) => value.replace(/[&<>"']/g, (char) => htmlEntities[char]);
 
 function response(files: Record<string, unknown>[]): AuthFilesResponse {
   return { observed_at: observedAt, files } as unknown as AuthFilesResponse;
@@ -225,7 +234,9 @@ describe('cooldown section rendering', () => {
 
     const available = render(snapshot, { onReset: () => {} });
     expect(available).toContain(i18n.t('auth_files.cooldown_reset_button'));
-    expect(available).toContain(i18n.t('auth_files.cooldown_reset_hint'));
+    expect(available).toContain(
+      `title="${escapeAttribute(i18n.t('auth_files.cooldown_reset_hint'))}"`
+    );
     expect(available).not.toContain('disabled=""');
 
     const pending = render(snapshot, { onReset: () => {}, resetting: true });
