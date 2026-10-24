@@ -61,6 +61,14 @@ import { useDevinQuotaAutoLoad } from './providers/devin/useDevinQuotaAutoLoad';
 import { useQuotaActions } from './hooks/useQuotaActions';
 import { useQuotaBatchLoader } from './hooks/useQuotaBatchLoader';
 import { readQuotaUiState, writeQuotaUiState } from './uiState';
+import {
+  QuotaLedger,
+  QuotaLedgerSkeleton,
+  QuotaViewSelect,
+  ShowEmailsToggle,
+  useChunkedQuotaLoad,
+  useQuotaViewPreferences,
+} from './ledger';
 import styles from './QuotaPage.module.scss';
 
 const TAB_IDS: string[] = ['all', ...QUOTA_TAB_ORDER];
@@ -89,6 +97,7 @@ export function QuotaPage() {
   const [layout, setLayout] = useState<CardLayout>(() => readCardLayout(QUOTA_CARD_LAYOUT_KEY));
   // Compact cards the user opened to full size; not persisted.
   const [expandedCards, setExpandedCards] = useState<ReadonlySet<string>>(() => new Set());
+  const { view, setView, showEmails, setShowEmails } = useQuotaViewPreferences();
   const searchInputRef = useRef<HTMLInputElement>(null);
   // 页头 + tabs 的入场级联（标题 → meta → 动作 → tabs，级差 70ms）
   const revealRef = useRevealGroup<HTMLDivElement>();
@@ -221,6 +230,8 @@ export function QuotaPage() {
     () => paginate(sortedEntries, page, QUOTA_PAGE_SIZE),
     [sortedEntries, page]
   );
+  // The ledger lists every filtered credential; the cards view shows one page.
+  const visible = view === 'ledger' ? sortedEntries : pageItems;
 
   const handleTabChange = useCallback((next: string) => {
     setTab(next as QuotaTabId);
@@ -288,6 +299,7 @@ export function QuotaPage() {
   /* ---------- 加载与操作 ---------- */
 
   const { batchLoading, loadQuota } = useQuotaBatchLoader();
+  const loadVisible = useChunkedQuotaLoad(loadQuota);
   const { resettingQuotaName, refreshQuota, resetQuota } = useQuotaActions(disableControls);
 
   const pendingRefreshRef = useRef<number | null>(null);
@@ -322,12 +334,12 @@ export function QuotaPage() {
         disableControls
       )
     ) {
-      void loadQuota(pageItems);
+      void loadVisible(visible);
     }
-  }, [disableControls, error, filesGeneration, loading, loadQuota, pageItems, sessionGeneration]);
+  }, [disableControls, error, filesGeneration, loading, loadVisible, visible, sessionGeneration]);
 
   useDevinQuotaAutoLoad(
-    pageItems,
+    visible,
     disableControls ||
       loading ||
       batchLoading ||
@@ -394,6 +406,9 @@ export function QuotaPage() {
         refreshing={loading || batchLoading}
         disableControls={disableControls}
         onRefreshAll={handleRefreshAll}
+        extraActions={
+          view === 'ledger' && <ShowEmailsToggle pressed={showEmails} onChange={setShowEmails} />
+        }
       />
 
       <section className={styles.workbench}>
@@ -406,6 +421,7 @@ export function QuotaPage() {
             resolvedTheme={resolvedTheme}
             onChange={handleTabChange}
           />
+          <QuotaViewSelect value={view} onChange={setView} />
         </div>
 
         <div className={styles.toolbar}>
@@ -445,7 +461,7 @@ export function QuotaPage() {
                 size="sm"
               />
             </div>
-            <CardLayoutSwitch value={layout} onChange={handleLayoutChange} />
+            {view === 'cards' && <CardLayoutSwitch value={layout} onChange={handleLayoutChange} />}
           </div>
         </div>
 
@@ -455,7 +471,9 @@ export function QuotaPage() {
           </div>
         )}
 
-        {loading ? (
+        {loading && view === 'ledger' ? (
+          <QuotaLedgerSkeleton />
+        ) : loading ? (
           <div className={styles.grid} aria-hidden="true">
             {Array.from({ length: SKELETON_CARD_COUNT }, (_, index) => (
               <Skeleton key={index} height={168} rounded={14} />
@@ -489,6 +507,16 @@ export function QuotaPage() {
               )
             }
           />
+        ) : view === 'ledger' ? (
+          <QuotaLedger
+            entries={sortedEntries}
+            quotaFor={getQuota}
+            resolvedTheme={resolvedTheme}
+            showEmails={showEmails}
+            canRefresh={canUseActions}
+            resettingKey={resettingQuotaName}
+            onRefresh={(entry) => void refreshQuota(entry.file, QUOTA_ADAPTERS[entry.type])}
+          />
         ) : (
           // One container for every layout, so switching layouts never remounts the cards.
           <StackedColumns
@@ -503,7 +531,7 @@ export function QuotaPage() {
           />
         )}
 
-        {!loading && filteredEntries.length > QUOTA_PAGE_SIZE && (
+        {view === 'cards' && !loading && filteredEntries.length > QUOTA_PAGE_SIZE && (
           <div className={styles.pagination}>
             <Button
               variant="secondary"
@@ -532,12 +560,14 @@ export function QuotaPage() {
         )}
 
         {/* 时间线只比较当前页凭证，避免大量凭证一次性生成无界泳道。 */}
-        <QuotaTimeline
-          entries={pageItems}
-          quotaFor={getQuota}
-          displayNameFor={displayNameFor}
-          resolvedTheme={resolvedTheme}
-        />
+        {view === 'cards' && (
+          <QuotaTimeline
+            entries={pageItems}
+            quotaFor={getQuota}
+            displayNameFor={displayNameFor}
+            resolvedTheme={resolvedTheme}
+          />
+        )}
       </section>
     </div>
   );
