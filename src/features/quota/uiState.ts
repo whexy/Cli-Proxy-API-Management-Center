@@ -4,11 +4,14 @@ import {
   type QuotaSortMode,
   type QuotaTabId,
 } from './constants';
+import { isQuotaView, type QuotaView } from './ledger/constants';
 
 /** 额度页 UI 偏好：会话级持久化（sessionStorage），跨会话不携带。 */
 export type QuotaUiState = {
   tab?: QuotaTabId;
   sortMode?: QuotaSortMode;
+  view?: QuotaView;
+  showEmails?: boolean;
 };
 
 const QUOTA_UI_STATE_KEY = 'quotaPage.uiState';
@@ -32,6 +35,8 @@ export const readQuotaUiState = (): QuotaUiState | null => {
     return {
       tab: isQuotaTabId(parsed.tab) ? parsed.tab : undefined,
       sortMode: isQuotaSortMode(parsed.sortMode) ? parsed.sortMode : undefined,
+      view: isQuotaView(parsed.view) ? parsed.view : undefined,
+      showEmails: typeof parsed.showEmails === 'boolean' ? parsed.showEmails : undefined,
     };
   } catch {
     return null;
