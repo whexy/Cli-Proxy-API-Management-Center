@@ -493,16 +493,14 @@ $hairline: 1px solid var(--border-color);
 .refreshAction {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
   border: 0;
-  border-radius: 8px;
-  padding: 6px 8px;
+  border-radius: 7px;
+  padding: 0;
   background: transparent;
   color: var(--text-tertiary);
-  font: inherit;
-  font-size: 12.5px;
-  font-weight: 500;
-  white-space: nowrap;
   cursor: pointer;
   transition:
     background-color var(--dur-hover) var(--ease-out-strong),
@@ -593,10 +591,10 @@ $hairline: 1px solid var(--border-color);
 }
 
 /* A section stacks once its minimum single-line width no longer fits:
- * identity 180 + action ~140 + one 124px window and 28px gap per column.
- * Keep in step with the .rows track sizes. */
+ * identity 180 + 26px icon action and its 28px gap + one 124px window and
+ * 28px gap per column. Keep in step with the .rows track sizes. */
 @for $columns from 1 through 8 {
-  @container ledger-section (max-width: #{320px + 152px * $columns}) {
+  @container ledger-section (max-width: #{240px + 152px * $columns}) {
     .section[data-columns='#{$columns}'] {
       @include stacked-rows;
     }
