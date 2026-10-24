@@ -104,13 +104,13 @@ function LedgerRow({
         onClick={onRefresh}
         disabled={isQuotaRefreshDisabled(canRefresh, loading, resetting)}
         title={t('auth_files.quota_refresh_hint')}
+        aria-label={t('auth_files.quota_refresh_single')}
       >
         <IconRefreshCw
           size={13}
           aria-hidden="true"
           className={loading || resetting ? styles.spinning : undefined}
         />
-        {status === 'error' ? t('quota_ledger.retry') : t('auth_files.quota_refresh_single')}
       </button>
     ) : null;
 
