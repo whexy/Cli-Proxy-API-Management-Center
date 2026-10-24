@@ -2,8 +2,8 @@
  * 额度查询页：提供商 tabs + 统一卡网格。
  *
  * 保留的行为契约（重设计不改）：
- * - 现有提供商保持点击加载；Devin 首次可见时主动查询一次，不轮询；
- * - cacheGeneration 会话隔离 + request-id 去重（见 useQuotaBatchLoader）；
+ * - 打开页面即刷新全部凭证额度，此后每分钟刷新一次（见 ledger/useQuotaAutoRefresh）；
+ * - cacheGeneration 会话隔离，同一时刻只跑一轮刷新（见 ledger/useQuotaAutoRefresh）；
  * - 文件列表变化后按 provider 剪枝额度缓存（已删文件不残留）；
  * - useHeaderRefresh 单槽位：本页唯一注册者，全局刷新 = 重取文件列表。
  */
@@ -47,16 +47,14 @@ import {
 import { nextRecoveryMs } from './resetSchedule';
 import { QUOTA_ADAPTERS, getQuotaSetter, type QuotaCardState } from './providers';
 import type { QuotaProviderType } from './providers/types';
-import { useDevinQuotaAutoLoad } from './providers/devin/useDevinQuotaAutoLoad';
 import { useQuotaActions } from './hooks/useQuotaActions';
-import { useQuotaBatchLoader } from './hooks/useQuotaBatchLoader';
 import { readQuotaUiState, writeQuotaUiState } from './uiState';
 import {
   QuotaLedger,
   QuotaLedgerSkeleton,
   QuotaViewSelect,
   ShowEmailsToggle,
-  useChunkedQuotaLoad,
+  useQuotaAutoRefresh,
   useQuotaViewPreferences,
 } from './ledger';
 import styles from './QuotaPage.module.scss';
@@ -206,8 +204,6 @@ export function QuotaPage() {
     () => paginate(sortedEntries, page, QUOTA_PAGE_SIZE),
     [sortedEntries, page]
   );
-  // The ledger lists every filtered credential; the cards view shows one page.
-  const visible = view === 'ledger' ? sortedEntries : pageItems;
 
   const handleTabChange = useCallback((next: string) => {
     setTab(next as QuotaTabId);
@@ -261,8 +257,10 @@ export function QuotaPage() {
 
   /* ---------- 加载与操作 ---------- */
 
-  const { batchLoading, loadQuota } = useQuotaBatchLoader();
-  const loadVisible = useChunkedQuotaLoad(loadQuota);
+  const { refreshing: quotaRefreshing, refreshAll: refreshAllQuota } = useQuotaAutoRefresh(
+    entries,
+    !disableControls && !loading && !error && filesGeneration === sessionGeneration
+  );
   const { resettingQuotaName, refreshQuota, resetQuota } = useQuotaActions(disableControls);
 
   const pendingRefreshRef = useRef<number | null>(null);
@@ -297,19 +295,17 @@ export function QuotaPage() {
         disableControls
       )
     ) {
-      void loadVisible(visible);
+      void refreshAllQuota(entries);
     }
-  }, [disableControls, error, filesGeneration, loading, loadVisible, visible, sessionGeneration]);
-
-  useDevinQuotaAutoLoad(
-    visible,
-    disableControls ||
-      loading ||
-      batchLoading ||
-      Boolean(error) ||
-      filesGeneration !== sessionGeneration,
-    loadQuota
-  );
+  }, [
+    disableControls,
+    entries,
+    error,
+    filesGeneration,
+    loading,
+    refreshAllQuota,
+    sessionGeneration,
+  ]);
 
   const canUseActions = !disableControls && !loading && filesGeneration === sessionGeneration;
 
@@ -341,7 +337,7 @@ export function QuotaPage() {
         totalCount={entries.length}
         loadedCount={loadedCount}
         attentionCount={attentionCount}
-        refreshing={loading || batchLoading}
+        refreshing={loading || quotaRefreshing}
         disableControls={disableControls}
         onRefreshAll={handleRefreshAll}
         extraActions={

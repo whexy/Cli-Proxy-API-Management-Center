@@ -16,7 +16,6 @@ export const QUOTA_LEDGER_LOCALES: Record<Language, LedgerStrings> = {
     show_windows: 'Show',
     hide_windows: 'Hide',
     load_quota: 'Load quota',
-    retry: 'Retry',
     disabled: 'Disabled',
   },
   'zh-CN': {
@@ -30,7 +29,6 @@ export const QUOTA_LEDGER_LOCALES: Record<Language, LedgerStrings> = {
     show_windows: '展开',
     hide_windows: '收起',
     load_quota: '加载额度',
-    retry: '重试',
     disabled: '已停用',
   },
   'zh-TW': {
@@ -44,7 +42,6 @@ export const QUOTA_LEDGER_LOCALES: Record<Language, LedgerStrings> = {
     show_windows: '展開',
     hide_windows: '收合',
     load_quota: '載入配額',
-    retry: '重試',
     disabled: '已停用',
   },
   ru: {
@@ -61,7 +58,6 @@ export const QUOTA_LEDGER_LOCALES: Record<Language, LedgerStrings> = {
     show_windows: 'Показать',
     hide_windows: 'Скрыть',
     load_quota: 'Загрузить квоту',
-    retry: 'Повторить',
     disabled: 'Отключено',
   },
   vi: {
@@ -75,7 +71,6 @@ export const QUOTA_LEDGER_LOCALES: Record<Language, LedgerStrings> = {
     show_windows: 'Hiện',
     hide_windows: 'Ẩn',
     load_quota: 'Tải quota',
-    retry: 'Thử lại',
     disabled: 'Đã tắt',
   },
   ko: {
@@ -89,7 +84,6 @@ export const QUOTA_LEDGER_LOCALES: Record<Language, LedgerStrings> = {
     show_windows: '표시',
     hide_windows: '숨기기',
     load_quota: '할당량 불러오기',
-    retry: '다시 시도',
     disabled: '비활성화됨',
   },
 };
