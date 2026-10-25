@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useNow } from '@/hooks/useNow';
 import type { ResolvedTheme } from '@/types';
-import { getQuotaDisplayName } from '@/utils/quota/identity';
 import { QUOTA_TAB_ORDER } from '../constants';
 import type { QuotaFileEntry } from '../logic';
 import type { QuotaCardState } from '../providers';
@@ -16,7 +15,7 @@ import {
 } from './ledgerModel';
 import { LedgerSection } from './LedgerSection';
 import { LedgerSummaryCard } from './LedgerSummaryCard';
-import { maskEmails } from './maskEmail';
+import { ledgerCredentialName } from './credentialName';
 import styles from './QuotaLedger.module.scss';
 
 export interface QuotaLedgerProps {
@@ -57,10 +56,7 @@ export function QuotaLedger({
       const ledgers = group.map((entry, index) =>
         normalizeLedgerQuota(entry.type, quotas[index], t)
       );
-      const names = group.map((entry) => {
-        const name = getQuotaDisplayName(entry.file);
-        return showEmails ? name : maskEmails(name, [entry.file.email]);
-      });
+      const names = group.map((entry) => ledgerCredentialName(entry.file, showEmails));
       return [{ type, entries: group, quotas, ledgers, names }];
     });
   }, [entries, quotaFor, showEmails, t]);
