@@ -218,8 +218,3 @@
     gap: 16px;
   }
 }
-
-/* The forecast brings its own controls; the view select marks the open view. */
-.workbench:has([data-quota-view='forecast']) > .toolbar {
-  display: none;
-}
