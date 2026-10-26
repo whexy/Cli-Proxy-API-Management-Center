@@ -7,7 +7,6 @@ import { QUOTA_PAGE_SIZE } from '../constants';
 import type { QuotaFileEntry } from '../logic';
 import { QUOTA_ADAPTERS, getQuotaMap, getQuotaSetter, type QuotaCardState } from '../providers';
 import { enrichQuotaInBackground } from '../quotaEnrichment';
-import { recordQuotaState } from '../forecast/recordQuotaHistory';
 import { QUOTA_AUTO_REFRESH_MS } from './constants';
 import { chunk } from './ledgerModel';
 
@@ -29,8 +28,7 @@ export const isQuotaRefreshDue = (
  * swaps every state for a loading one, which would blank all but Claude's rows
  * each minute, so only credentials without a result yet show loading.
  * Upstream calls stay capped at QUOTA_PAGE_SIZE at a time, as pagination caps
- * the cards view. Each fresh result also goes into the quota history the
- * forecast view draws.
+ * the cards view.
  */
 export function useQuotaAutoRefresh(entries: QuotaFileEntry[], ready: boolean) {
   const { t } = useTranslation();
@@ -71,7 +69,6 @@ export function useQuotaAutoRefresh(entries: QuotaFileEntry[], ready: boolean) {
         getQuotaSetter(adapter)((prev) => ({ ...prev, [cacheKey]: next }));
       });
       if (committed && next.status === 'success') {
-        recordQuotaState(entry, next, t);
         void enrichQuotaInBackground(adapter, entry.file, data, next, t);
       }
     },

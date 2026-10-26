@@ -7,7 +7,6 @@ export const QUOTA_LEDGER_LOCALES: Record<Language, LedgerStrings> = {
   en: {
     view_label: 'View',
     view_ledger: 'Ledger',
-    view_forecast: 'Forecast',
     view_cards: 'Cards',
     show_emails: 'Show emails',
     credentials_one: '{{count}} credential',
@@ -22,7 +21,6 @@ export const QUOTA_LEDGER_LOCALES: Record<Language, LedgerStrings> = {
   'zh-CN': {
     view_label: '视图',
     view_ledger: '台账',
-    view_forecast: '预测',
     view_cards: '卡片',
     show_emails: '显示邮箱',
     credentials_other: '{{count}} 个凭证',
@@ -36,7 +34,6 @@ export const QUOTA_LEDGER_LOCALES: Record<Language, LedgerStrings> = {
   'zh-TW': {
     view_label: '檢視',
     view_ledger: '帳本',
-    view_forecast: '預測',
     view_cards: '卡片',
     show_emails: '顯示電子郵件',
     credentials_other: '{{count}} 個憑證',
@@ -50,7 +47,6 @@ export const QUOTA_LEDGER_LOCALES: Record<Language, LedgerStrings> = {
   ru: {
     view_label: 'Вид',
     view_ledger: 'Реестр',
-    view_forecast: 'Прогноз',
     view_cards: 'Карточки',
     show_emails: 'Показывать email',
     credentials_one: '{{count}} учётная запись',
@@ -67,7 +63,6 @@ export const QUOTA_LEDGER_LOCALES: Record<Language, LedgerStrings> = {
   vi: {
     view_label: 'Chế độ xem',
     view_ledger: 'Sổ cái',
-    view_forecast: 'Dự báo',
     view_cards: 'Thẻ',
     show_emails: 'Hiện email',
     credentials_other: '{{count}} credential',
@@ -81,7 +76,6 @@ export const QUOTA_LEDGER_LOCALES: Record<Language, LedgerStrings> = {
   ko: {
     view_label: '보기',
     view_ledger: '원장',
-    view_forecast: '예측',
     view_cards: '카드',
     show_emails: '이메일 표시',
     credentials_other: '자격 증명 {{count}}개',
