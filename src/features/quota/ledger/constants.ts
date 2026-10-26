@@ -1,4 +1,4 @@
-export const QUOTA_VIEWS = ['ledger', 'forecast', 'cards'] as const;
+export const QUOTA_VIEWS = ['ledger', 'cards'] as const;
 
 export type QuotaView = (typeof QUOTA_VIEWS)[number];
 
