@@ -61,6 +61,7 @@ import {
   useQuotaAutoRefresh,
   useQuotaViewPreferences,
 } from './ledger';
+import { QuotaForecast, QuotaForecastSkeleton } from './forecast';
 import styles from './QuotaPage.module.scss';
 
 const TAB_IDS: string[] = ['all', ...QUOTA_TAB_ORDER];
@@ -193,9 +194,11 @@ export function QuotaPage() {
       ),
     [entries]
   );
+  // The forecast pools every credential of a provider, so it has no search box.
+  const activeSearch = view === 'forecast' ? '' : search;
   const filteredEntries = useMemo(
-    () => filterEntriesBySearch(filterEntriesByTab(entries, tab), search),
-    [entries, tab, search]
+    () => filterEntriesBySearch(filterEntriesByTab(entries, tab), activeSearch),
+    [entries, tab, activeSearch]
   );
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
@@ -353,7 +356,7 @@ export function QuotaPage() {
         disableControls={disableControls}
         onRefreshAll={handleRefreshAll}
         extraActions={
-          view === 'ledger' && <ShowEmailsToggle pressed={showEmails} onChange={setShowEmails} />
+          view !== 'cards' && <ShowEmailsToggle pressed={showEmails} onChange={setShowEmails} />
         }
       />
 
@@ -416,6 +419,8 @@ export function QuotaPage() {
 
         {loading && view === 'ledger' ? (
           <QuotaLedgerSkeleton />
+        ) : loading && view === 'forecast' ? (
+          <QuotaForecastSkeleton />
         ) : loading ? (
           <div className={styles.grid} aria-hidden="true">
             {Array.from({ length: SKELETON_CARD_COUNT }, (_, index) => (
@@ -425,21 +430,21 @@ export function QuotaPage() {
         ) : isEmpty ? (
           <EmptyState
             title={
-              search.trim()
+              activeSearch.trim()
                 ? t('quota_management.search_empty_title')
                 : tab === 'all'
                   ? t('quota_management.empty_title')
                   : t(`${QUOTA_ADAPTERS[tab].i18nPrefix}.empty_title`)
             }
             description={
-              search.trim()
+              activeSearch.trim()
                 ? t('quota_management.search_empty_desc')
                 : tab === 'all'
                   ? t('quota_management.empty_desc')
                   : t(`${QUOTA_ADAPTERS[tab].i18nPrefix}.empty_desc`)
             }
             action={
-              search.trim() ? (
+              activeSearch.trim() ? (
                 <Button variant="secondary" size="sm" onClick={() => handleSearchChange('')}>
                   {t('quota_management.search_clear')}
                 </Button>
@@ -459,6 +464,13 @@ export function QuotaPage() {
             canRefresh={canUseActions}
             resettingKey={resettingQuotaName}
             onRefresh={(entry) => void refreshQuota(entry.file, QUOTA_ADAPTERS[entry.type])}
+          />
+        ) : view === 'forecast' ? (
+          <QuotaForecast
+            entries={sortedEntries}
+            quotaFor={getQuota}
+            resolvedTheme={resolvedTheme}
+            showEmails={showEmails}
           />
         ) : (
           <div className={styles.grid}>
