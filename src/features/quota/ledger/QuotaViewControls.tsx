@@ -18,7 +18,7 @@ export function QuotaViewSelect({
     [t]
   );
   return (
-    <div className={styles.viewSelect}>
+    <div className={styles.viewSelect} data-quota-view={value}>
       <Select
         value={value}
         options={options}
