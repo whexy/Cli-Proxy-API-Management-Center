@@ -72,19 +72,33 @@ describe('normalizeLedgerQuota', () => {
     expect(normalizeLedgerQuota('claude', quota, t)).toEqual({
       plan: 'claude_quota.plan_max',
       windows: [
-        { id: 'five-hour', label: 'claude_quota.five_hour', remainingPercent: 100, resetAt: null },
+        {
+          id: 'five-hour',
+          label: 'claude_quota.five_hour',
+          remainingPercent: 100,
+          resetAt: null,
+          periodHours: 168,
+        },
         {
           id: 'seven-day-fable',
           label: 'claude_quota.seven_day_fable',
           remainingPercent: 58,
           resetAt: NOW + DAY_MS,
+          periodHours: 168,
         },
-        { id: 'seven-day', label: 'claude_quota.seven_day', remainingPercent: 0, resetAt: null },
+        {
+          id: 'seven-day',
+          label: 'claude_quota.seven_day',
+          remainingPercent: 0,
+          resetAt: null,
+          periodHours: 168,
+        },
         {
           id: 'seven-day-opus',
           label: 'claude_quota.seven_day_opus',
           remainingPercent: null,
           resetAt: null,
+          periodHours: 168,
         },
       ],
     });
@@ -112,6 +126,7 @@ describe('normalizeLedgerQuota', () => {
           usedPercent: 83,
           resetLabel: '-',
           resetAtMs: NOW + 2 * DAY_MS,
+          periodHours: 168,
         },
       ],
     });
@@ -123,6 +138,7 @@ describe('normalizeLedgerQuota', () => {
         label: 'codex_quota.additional_secondary_window{"name":"Spark"}',
         remainingPercent: 17,
         resetAt: NOW + 2 * DAY_MS,
+        periodHours: 168,
       },
     ]);
     expect(ledger?.plan).toBe('codex_quota.plan_pro');
@@ -182,6 +198,7 @@ describe('normalizeLedgerQuota', () => {
           label: 'xai_quota.weekly_limit',
           remainingPercent: null,
           resetAt: NOW + 5 * DAY_MS,
+          periodHours: null,
         },
       ],
     });
@@ -208,12 +225,14 @@ describe('normalizeLedgerQuota', () => {
         label: 'xai_quota.pay_as_you_go_label',
         remainingPercent: 60,
         resetAt: null,
+        periodHours: null,
       },
       {
         id: 'monthly',
         label: 'xai_quota.monthly_credits',
         remainingPercent: 80,
         resetAt: NOW + 10 * DAY_MS,
+        periodHours: null,
       },
     ]);
   });
@@ -244,6 +263,7 @@ describe('normalizeLedgerQuota', () => {
               window: 'weekly',
               remainingFraction: 0.35,
               resetAtMs: NOW + 6 * DAY_MS,
+              periodHours: 168,
             },
           ],
         },
@@ -257,6 +277,7 @@ describe('normalizeLedgerQuota', () => {
       label: 'antigravity_quota.group_gemini_models · antigravity_quota.weekly_limit',
       remainingPercent: 35,
       resetAt: NOW + 6 * DAY_MS,
+      periodHours: 168,
     });
     expect(second?.windows[0].id).toBe(first?.windows[0].id as string);
     expect(first?.plan).toBe('antigravity_subscription.plan_ultra');
@@ -285,7 +306,13 @@ describe('normalizeLedgerQuota', () => {
     expect(normalizeLedgerQuota('plugin', quota, t)).toEqual({
       plan: 'Team Pro',
       windows: [
-        { id: 'requests/daily', label: 'Requests', remainingPercent: 50, resetAt: NOW + HOUR_MS },
+        {
+          id: 'requests/daily',
+          label: 'Requests',
+          remainingPercent: 50,
+          resetAt: NOW + HOUR_MS,
+          periodHours: null,
+        },
       ],
     });
   });
@@ -305,8 +332,20 @@ describe('normalizeLedgerQuota', () => {
     expect(normalizeLedgerQuota('devin', devin, t)).toEqual({
       plan: 'Teams',
       windows: [
-        { id: 'daily', label: 'devin_quota.daily', remainingPercent: 64, resetAt: NOW + HOUR_MS },
-        { id: 'weekly', label: 'devin_quota.weekly', remainingPercent: null, resetAt: null },
+        {
+          id: 'daily',
+          label: 'devin_quota.daily',
+          remainingPercent: 64,
+          resetAt: NOW + HOUR_MS,
+          periodHours: 24,
+        },
+        {
+          id: 'weekly',
+          label: 'devin_quota.weekly',
+          remainingPercent: null,
+          resetAt: null,
+          periodHours: 168,
+        },
       ],
     });
 
@@ -325,8 +364,15 @@ describe('normalizeLedgerQuota', () => {
         label: 'meta_quota.window_duration_hours{"hours":5}',
         remainingPercent: 87.5,
         resetAt: NOW + 600_000,
+        periodHours: 5,
       },
-      { id: 'weekly', label: 'meta_quota.weekly', remainingPercent: null, resetAt: null },
+      {
+        id: 'weekly',
+        label: 'meta_quota.weekly',
+        remainingPercent: null,
+        resetAt: null,
+        periodHours: 168,
+      },
     ]);
   });
 });
@@ -335,7 +381,7 @@ const win = (
   id: string,
   remainingPercent: number | null,
   resetAt: number | null = null
-): LedgerWindow => ({ id, label: id, remainingPercent, resetAt });
+): LedgerWindow => ({ id, label: id, remainingPercent, resetAt, periodHours: null });
 
 const quota = (...windows: LedgerWindow[]): LedgerQuota => ({ windows, plan: null });
 
