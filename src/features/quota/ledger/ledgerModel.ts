@@ -36,6 +36,8 @@ export interface LedgerWindow {
   remainingPercent: number | null;
   /** Epoch ms of the next reset; null when none is reported. */
   resetAt: number | null;
+  /** Window length; null when the provider does not state it. */
+  periodHours: number | null;
 }
 
 export interface LedgerQuota {
@@ -56,6 +58,11 @@ const clampPercent = (value: number) => Math.min(100, Math.max(0, value));
 
 const finiteOrNull = (value: unknown): number | null =>
   typeof value === 'number' && Number.isFinite(value) ? value : null;
+
+const positiveOrNull = (value: unknown): number | null => {
+  const number = finiteOrNull(value);
+  return number !== null && number > 0 ? number : null;
+};
 
 const remainingFromUsed = (used: unknown): number | null => {
   const value = finiteOrNull(used);
@@ -110,6 +117,7 @@ function claudeLedger(quota: ClaudeQuotaState, t: TFunction): LedgerQuota {
       label: window.labelKey ? t(window.labelKey) : window.label,
       remainingPercent: remainingFromUsed(window.usedPercent),
       resetAt: finiteOrNull(window.resetAtMs),
+      periodHours: positiveOrNull(window.periodHours),
     })),
     plan: quota.planType ? t(`claude_quota.${quota.planType}`) : null,
   };
@@ -122,6 +130,7 @@ function codexLedger(quota: CodexQuotaState, t: TFunction): LedgerQuota {
       label: window.labelKey ? t(window.labelKey, window.labelParams ?? {}) : window.label,
       remainingPercent: remainingFromUsed(window.usedPercent),
       resetAt: finiteOrNull(window.resetAtMs),
+      periodHours: positiveOrNull(window.periodHours),
     })),
     plan: codexPlanLabel(quota.planType, t),
   };
@@ -136,6 +145,7 @@ function devinLedger(quota: DevinQuotaState, t: TFunction): LedgerQuota {
         label: t(`devin_quota.${window.id}`),
         remainingPercent: remaining === null ? null : clampPercent(remaining),
         resetAt: finiteOrNull(window.resetAtMs),
+        periodHours: positiveOrNull(window.periodHours),
       };
     }),
     plan: quota.plan || null,
@@ -157,6 +167,7 @@ function kimiLedger(quota: KimiQuotaState, t: TFunction): LedgerQuota {
             ? 0
             : null,
       resetAt: finiteOrNull(row.resetAtMs),
+      periodHours: positiveOrNull(row.periodHours),
     })),
     plan: null,
   };
@@ -184,6 +195,7 @@ function xaiLedger(quota: XaiQuotaState, t: TFunction): LedgerQuota {
       label: t('xai_quota.weekly_limit'),
       remainingPercent: remainingFromUsed(billing.usagePercent),
       resetAt: finiteOrNull(billing.resetAtMs),
+      periodHours: positiveOrNull(billing.periodHours),
     });
   }
   if ((billing.onDemandCapCents ?? 0) > 0) {
@@ -192,6 +204,7 @@ function xaiLedger(quota: XaiQuotaState, t: TFunction): LedgerQuota {
       label: t('xai_quota.pay_as_you_go_label'),
       remainingPercent: remainingFromUsed(billing.onDemandUsedPercent),
       resetAt: null,
+      periodHours: null,
     });
   }
   const hasMonthly =
@@ -205,6 +218,7 @@ function xaiLedger(quota: XaiQuotaState, t: TFunction): LedgerQuota {
       label: t('xai_quota.monthly_credits'),
       remainingPercent: remainingFromUsed(billing.usedPercent),
       resetAt: parseIsoToMs(billing.billingPeriodEnd),
+      periodHours: null,
     });
   }
 
@@ -227,6 +241,7 @@ function antigravityLedger(quota: AntigravityQuotaState, t: TFunction): LedgerQu
           ),
           remainingPercent: remainingFromFraction(bucket.remainingFraction),
           resetAt: finiteOrNull(bucket.resetAtMs) ?? parseIsoToMs(bucket.resetTime),
+          periodHours: positiveOrNull(bucket.periodHours),
         };
       });
     }),
@@ -243,11 +258,14 @@ function pluginLedger(quota: PluginQuotaState): LedgerQuota {
         label: joinLabel(group.label, bucket.label),
         remainingPercent: remainingFromFraction(bucket.remainingFraction),
         resetAt: finiteOrNull(bucket.resetAtMs) ?? parseIsoToMs(bucket.resetTime),
+        periodHours: positiveOrNull(bucket.periodHours),
       }))
     ),
     plan: subscription?.tierName || subscription?.plan || subscription?.tierId || null,
   };
 }
+
+const META_WEEKLY_HOURS = 168;
 
 function metaLedger(quota: MetaQuotaState, t: TFunction): LedgerQuota {
   const data = quota.data;
@@ -267,6 +285,7 @@ function metaLedger(quota: MetaQuotaState, t: TFunction): LedgerQuota {
         label,
         remainingPercent: remainingFromUsed(window.usedPercent),
         resetAt: resetAt === null ? null : resetAt * 1000,
+        periodHours: window.id === 'weekly' ? META_WEEKLY_HOURS : minutes ? minutes / 60 : null,
       };
     }),
     plan: data.planName || null,
