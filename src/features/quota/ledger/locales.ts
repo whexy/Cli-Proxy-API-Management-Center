@@ -86,4 +86,18 @@ export const QUOTA_LEDGER_LOCALES: Record<Language, LedgerStrings> = {
     load_quota: '할당량 불러오기',
     disabled: '비활성화됨',
   },
+  tr: {
+    view_label: 'Görünüm',
+    view_ledger: 'Defter',
+    view_cards: 'Kartlar',
+    show_emails: 'E-postaları Göster',
+    credentials_one: '{{count}} Kimlik Bilgisi',
+    credentials_other: '{{count}} Kimlik Bilgisi',
+    of_capacity: '/ %{{percent}}',
+    no_reset: 'Bekleyen Sıfırlama Yok',
+    show_windows: 'Göster',
+    hide_windows: 'Gizle',
+    load_quota: 'Kotayı Yükle',
+    disabled: 'Devre Dışı',
+  },
 };
