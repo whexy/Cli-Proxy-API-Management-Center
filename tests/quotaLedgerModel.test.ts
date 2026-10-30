@@ -126,8 +126,12 @@ describe('normalizeLedgerQuota', () => {
       },
     ]);
     expect(ledger?.plan).toBe('codex_quota.plan_pro');
+    expect(normalizeLedgerQuota('codex', quota('promax'), t)?.plan).toBe('codex_quota.plan_promax');
     expect(normalizeLedgerQuota('codex', quota('prolite'), t)?.plan).toBe(
       'codex_quota.plan_prolite'
+    );
+    expect(normalizeLedgerQuota('codex', quota('self_serve_business_prolite'), t)?.plan).toBe(
+      'codex_quota.plan_business_premium'
     );
     expect(normalizeLedgerQuota('codex', quota('plus'), t)?.plan).toBe('codex_quota.plan_plus');
   });
