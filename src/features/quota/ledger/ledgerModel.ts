@@ -17,7 +17,14 @@ import type {
   PluginQuotaState,
   XaiQuotaState,
 } from '@/types';
-import { PREMIUM_CODEX_PLAN_TYPES, normalizePlanType, parseIsoToMs } from '@/utils/quota';
+import {
+  BUSINESS_PREMIUM_CODEX_PLAN_TYPE,
+  PRO_CODEX_PLAN_TYPE,
+  PRO_LITE_CODEX_PLAN_TYPES,
+  PRO_MAX_CODEX_PLAN_TYPES,
+  normalizePlanType,
+  parseIsoToMs,
+} from '@/utils/quota';
 import {
   QUOTA_PROGRESS_HIGH_THRESHOLD,
   QUOTA_PROGRESS_MEDIUM_THRESHOLD,
@@ -75,9 +82,12 @@ const joinLabel = (scope: string, label: string) =>
 const codexPlanLabel = (planType: string | null | undefined, t: TFunction): string | null => {
   const normalized = normalizePlanType(planType);
   if (!normalized) return null;
-  if (normalized === 'self_serve_business_prolite') return t('codex_quota.plan_business_premium');
-  if (normalized === 'pro') return t('codex_quota.plan_pro');
-  if (PREMIUM_CODEX_PLAN_TYPES.has(normalized)) return t('codex_quota.plan_prolite');
+  if (normalized === BUSINESS_PREMIUM_CODEX_PLAN_TYPE) {
+    return t('codex_quota.plan_business_premium');
+  }
+  if (PRO_MAX_CODEX_PLAN_TYPES.has(normalized)) return t('codex_quota.plan_promax');
+  if (normalized === PRO_CODEX_PLAN_TYPE) return t('codex_quota.plan_pro');
+  if (PRO_LITE_CODEX_PLAN_TYPES.has(normalized)) return t('codex_quota.plan_prolite');
   if (normalized === 'plus') return t('codex_quota.plan_plus');
   if (normalized === 'team') return t('codex_quota.plan_team');
   if (normalized === 'free') return t('codex_quota.plan_free');
